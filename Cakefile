@@ -17,8 +17,8 @@ watching =
   coffee: true
 
 src =
-  sass: "sass"
-  coffee: "coffee"
+  sass: "src/sass"
+  coffee: "src/coffee"
 
 out =
   css: "css"

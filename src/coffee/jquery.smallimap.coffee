@@ -29,9 +29,10 @@ Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) lice
 
   class Smallimap
 
-    constructor: (@obj, cwidth, cheight, @renderContext, @world, options={}) ->
+    constructor: (@obj, cwidth, cheight, @renderContext, worldFunction, options={}) ->
       $.extend true, @, options
 
+      @world = worldFunction()
       @dotDiameter = @dotRadius * 2
       @width = cwidth / @dotDiameter
       @height = cheight / @dotDiameter
