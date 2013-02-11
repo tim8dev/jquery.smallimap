@@ -50,8 +50,11 @@
 
   # Loading image
   console.log 'Loading image'
-  worldImage = new Image() 
-  $(worldImage).load ->
+  worldImage = new Image()
+  worldImage.src = 'images/world.png'
+  $('body').append worldImage
+
+  $('img').on('load', ->
     console.log 'Image loaded'
 
     # Converting image
@@ -59,17 +62,14 @@
     worldJson = imageToJson worldImage
 
     # Show result
-    console.log 'Result:'
-    console.log worldJson
+    # console.log 'Result:'
+    # console.log worldJson
+
+    worldJsonFunc = 'function () { return' + JSON.stringify(worldJson) + '; }'
 
     resultDiv = $ '<div>'
-    resultDiv.text JSON.stringify(worldJson)
-    $('body').append resultDiv
+    resultDiv.text worldJsonFunc
+    $('body').append resultDiv)
 
-  worldImage.src = 'img/world.png'
-
-  # $('body').append worldImage
-
-
-
+  null
 )(jQuery)

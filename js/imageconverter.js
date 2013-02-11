@@ -42,16 +42,17 @@
   };
   console.log('Loading image');
   worldImage = new Image();
-  $(worldImage).load(function() {
-    var resultDiv, worldJson;
+  worldImage.src = 'images/world.png';
+  $('body').append(worldImage);
+  $('img').on('load', function() {
+    var resultDiv, worldJson, worldJsonFunc;
     console.log('Image loaded');
     console.log('Converting image');
     worldJson = imageToJson(worldImage);
-    console.log('Result:');
-    console.log(worldJson);
+    worldJsonFunc = 'function () { return' + JSON.stringify(worldJson) + '; }';
     resultDiv = $('<div>');
-    resultDiv.text(JSON.stringify(worldJson));
+    resultDiv.text(worldJsonFunc);
     return $('body').append(resultDiv);
   });
-  return worldImage.src = 'img/world.png';
+  return null;
 })(jQuery);
