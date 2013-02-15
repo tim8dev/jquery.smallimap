@@ -14,18 +14,17 @@ Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) lice
     version: '0.3.0'
     defaults:
       dotRadius: 4
+      dotRatio: 0.8
+      nightRatio: 0.8
       fps: 20
+      minLandiness: 0.2
       width: 1000
       height: 500
       showNight: true
       colors:
-        lights: ["#fdf6e3", "#fafafa", "#dddddd", "#cccccc", "#bbbbbb"]
-        darks: ["#444444", "#666666", "#888888", "#aaaaaa"]
         land:
-          day: (smallimap) ->
-            smallimap.colors.lights.slice(1).concat(smallimap.colors.darks.slice(1).reverse())
-          night: (smallimap) ->
-            smallimap.colors.land.day().reverse()
+          day:   ["#000", "#000", "#000", "#000"]
+          night: ["#000", "#000", "#000", "#000"]
 
   class Smallimap
 
@@ -99,22 +98,22 @@ Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) lice
       now = new Date()
       sunSet = new SunriseSunset(now.getYear(), now.getMonth() + 1, now.getDate(), latitude, longitude)
 
-      landColors = @colors.land.day(@)
-      idx = Math.floor(darkness * (landColors.length - 2))
-      if sunSet.isDaylight(now.getHours()) or not @showNight# or latitude >= 69
-        new Color(landColors[idx])
-      else
-        new Color(landColors[idx + 1])
+      landColors = @colors.land.night
+      if sunSet.isDaylight(now.getHours()) or not @showNight
+        landColors = @colors.land.day
+
+      idx = Math.floor(darkness * landColors.length)
+      new Color(landColors[idx])
 
     radiusFor: (longitude, latitude, landiness) =>
       now = new Date()
       sunSet = new SunriseSunset(now.getYear(), now.getMonth() + 1, now.getDate(), latitude, longitude)
 
       # if lat >= 69 the northpole should get it well deserved sunshine
-      if sunSet.isDaylight(now.getHours()) or not @showNight# or latitude >= 69
-        @dotRadius * Math.max(0.2, landiness) * 0.6
+      if sunSet.isDaylight(now.getHours()) or not @showNight
+        @dotRadius * Math.max(@minLandiness, landiness) * @dotRatio * @nightRatio
       else
-        @dotRadius * Math.max(0.25, landiness) * 0.78
+        @dotRadius * Math.max(@minLandiness, landiness) * @dotRatio
 
     convertToWorldX: (x) =>
       Math.floor(x * @world.length / @width)
@@ -295,13 +294,13 @@ Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) lice
       fadeOutDuration = @duration * 8 / 9 * (1 - ratio)
 
       startColor = dot.initial.color
-      endColor = new Color(@color.rgbString()).mix(startColor, ratio*ratio)
+      endColor = new Color(@color.rgbString()).mix(startColor, ratio)
 
       startRadius = dot.initial.radius
-      if(startRadius >= @smallimap.dotRadius * 0.5)
-        endRadius = startRadius - startRadius * 0.5 * (1 - ratio)
-      else
-        endRadius = (@smallimap.dotRadius - startRadius) * (1 - ratio) + startRadius
+      #if(startRadius >= @smallimap.dotRadius * 0.5)
+      #  endRadius = startRadius - startRadius * 0.5 * (1 - ratio)
+      #else
+      endRadius = (@smallimap.dotRadius - startRadius) * (1 - ratio) + startRadius
 
       if fadeInDuration > 0
         @enqueue new DelayEffect(dot, delay,
@@ -309,12 +308,12 @@ Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) lice
             @enqueue new ColorEffect(dot, fadeInDuration,
               startColor: startColor
               endColor: endColor
-              easing: easing.quadratic
+              easing: easing.linear
               callback: =>
                 @enqueue new ColorEffect(dot, fadeOutDuration,
                   startColor: endColor
                   endColor: startColor
-                  easing: Math.sqrt
+                  easing: easing.quadratic
                 )
             )
             @enqueue new RadiusEffect(dot, fadeInDuration,
@@ -325,7 +324,7 @@ Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) lice
                 @enqueue new RadiusEffect(dot, fadeOutDuration,
                   startRadius: endRadius
                   endRadius: startRadius
-                  easing: Math.quadratic
+                  easing: easing.quadratic
                 )
             )
         )

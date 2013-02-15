@@ -20,20 +20,17 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
     version: '0.3.0',
     defaults: {
       dotRadius: 4,
+      dotRatio: 0.8,
+      nightRatio: 0.8,
       fps: 20,
+      minLandiness: 0.2,
       width: 1000,
       height: 500,
       showNight: true,
       colors: {
-        lights: ["#fdf6e3", "#fafafa", "#dddddd", "#cccccc", "#bbbbbb"],
-        darks: ["#444444", "#666666", "#888888", "#aaaaaa"],
         land: {
-          day: function(smallimap) {
-            return smallimap.colors.lights.slice(1).concat(smallimap.colors.darks.slice(1).reverse());
-          },
-          night: function(smallimap) {
-            return smallimap.colors.land.day().reverse();
-          }
+          day: ["#000", "#000", "#000", "#000"],
+          night: ["#000", "#000", "#000", "#000"]
         }
       }
     }
@@ -158,13 +155,12 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
       darkness = landiness * landiness;
       now = new Date();
       sunSet = new SunriseSunset(now.getYear(), now.getMonth() + 1, now.getDate(), latitude, longitude);
-      landColors = this.colors.land.day(this);
-      idx = Math.floor(darkness * (landColors.length - 2));
+      landColors = this.colors.land.night;
       if (sunSet.isDaylight(now.getHours()) || !this.showNight) {
-        return new Color(landColors[idx]);
-      } else {
-        return new Color(landColors[idx + 1]);
+        landColors = this.colors.land.day;
       }
+      idx = Math.floor(darkness * landColors.length);
+      return new Color(landColors[idx]);
     };
 
     Smallimap.prototype.radiusFor = function(longitude, latitude, landiness) {
@@ -172,9 +168,9 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
       now = new Date();
       sunSet = new SunriseSunset(now.getYear(), now.getMonth() + 1, now.getDate(), latitude, longitude);
       if (sunSet.isDaylight(now.getHours()) || !this.showNight) {
-        return this.dotRadius * Math.max(0.2, landiness) * 0.6;
+        return this.dotRadius * Math.max(this.minLandiness, landiness) * this.dotRatio * this.nightRatio;
       } else {
-        return this.dotRadius * Math.max(0.25, landiness) * 0.78;
+        return this.dotRadius * Math.max(this.minLandiness, landiness) * this.dotRatio;
       }
     };
 
@@ -479,25 +475,21 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
       fadeInDuration = this.duration / 9 * (1 - ratio);
       fadeOutDuration = this.duration * 8 / 9 * (1 - ratio);
       startColor = dot.initial.color;
-      endColor = new Color(this.color.rgbString()).mix(startColor, ratio * ratio);
+      endColor = new Color(this.color.rgbString()).mix(startColor, ratio);
       startRadius = dot.initial.radius;
-      if (startRadius >= this.smallimap.dotRadius * 0.5) {
-        endRadius = startRadius - startRadius * 0.5 * (1 - ratio);
-      } else {
-        endRadius = (this.smallimap.dotRadius - startRadius) * (1 - ratio) + startRadius;
-      }
+      endRadius = (this.smallimap.dotRadius - startRadius) * (1 - ratio) + startRadius;
       if (fadeInDuration > 0) {
         return this.enqueue(new DelayEffect(dot, delay, {
           callback: function() {
             _this.enqueue(new ColorEffect(dot, fadeInDuration, {
               startColor: startColor,
               endColor: endColor,
-              easing: easing.quadratic,
+              easing: easing.linear,
               callback: function() {
                 return _this.enqueue(new ColorEffect(dot, fadeOutDuration, {
                   startColor: endColor,
                   endColor: startColor,
-                  easing: Math.sqrt
+                  easing: easing.quadratic
                 }));
               }
             }));
@@ -509,7 +501,7 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
                 return _this.enqueue(new RadiusEffect(dot, fadeOutDuration, {
                   startRadius: endRadius,
                   endRadius: startRadius,
-                  easing: Math.quadratic
+                  easing: easing.quadratic
                 }));
               }
             }));
